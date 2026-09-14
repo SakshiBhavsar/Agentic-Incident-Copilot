@@ -8,6 +8,7 @@ attribute holds, and nullability is inferred from ``Optional``/``| None``.
 from __future__ import annotations
 
 import enum
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -15,6 +16,9 @@ from sqlalchemy import DateTime, MetaData
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 # Deterministic names for every constraint/index. Without this, Postgres
 # auto-generates names, and Alembic can't reliably diff or drop them later.
@@ -94,3 +98,15 @@ class ActionStatus(enum.StrEnum):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+
+
+class Incident(Base):
+    __tablename__ = "incidents"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(String(255))
+    severity: Mapped[Severity] = mapped_column(enum_column(Severity, "severity"))
+    status: Mapped[IncidentStatus] = mapped_column(
+        enum_column(IncidentStatus, "incident_status"), default=IncidentStatus.OPEN
+    )
+    created_at: Mapped[datetime]
