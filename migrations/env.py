@@ -5,16 +5,19 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.db.models import Base
-
-from app.config import settings
-
-config.set_main_option("sqlalchemy.url", settings.database_url)
-
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+from app.config import settings
+from app.db.models import Base
+
+#settings.database_url uses the async driver (postgresql+asyncpg://...),
+# but Alembic's default env.py template runs migrations synchronously. Mixing them will error. 
+# The simplest fix for a learning-stage project: convert the URL to the sync driver just for Alembic's use
+sync_url = settings.database_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
+config.set_main_option("sqlalchemy.url", sync_url)
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
